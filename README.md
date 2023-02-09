@@ -24,7 +24,6 @@ published by the Purdue University Department of Computer Science
         
         In addition to "-h"
         "-i" : Print import names
-        "-e" : Print export names
         "-r" : Print resource ID's
         "-s" : Print additional section information
 

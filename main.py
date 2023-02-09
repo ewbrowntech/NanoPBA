@@ -4,7 +4,7 @@ main.py
 @Author - Ethan Brown - ewb0020@auburn.edu
 @Version - 09 FEB 23
 
-Runs decompiler
+Runs disassembler
 """
 import argparse
 from header.parse_header import parse_header
@@ -12,7 +12,7 @@ from header.print_header import print_header
 import pefile
 
 
-# Run decompiler
+# Run disassembler
 def main():
     arg_parser = argparse.ArgumentParser(add_help=False)
     arg_parser.add_argument('-h', '--header', action='store_true')
