@@ -17,7 +17,6 @@ published by the Purdue University Department of Computer Science
 3. Initiate Disassembly using the following command:
         
         python main.py [flags] [filepath]
-
     The following flags are provided:
     
         "-h" : Print information contained within the header
