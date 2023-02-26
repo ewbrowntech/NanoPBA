@@ -20,8 +20,10 @@ def parse_header(pe):
     except AttributeError:
         export_directory = None
 
-    resource_directory = pe.DIRECTORY_ENTRY_RESOURCE
-    sections = pe.sections
+    try:
+        resource_directory = pe.DIRECTORY_ENTRY_RESOURCE
+    except AttributeError:
+        resource_directory = None
 
     try:  # Get debug directory (if it exists)
         debug_information = pe.DIRECTORY_ENTRY_DEBUG
@@ -32,6 +34,8 @@ def parse_header(pe):
         tls_directory = pe.DIRECTORY_ENTRY_TLS
     except AttributeError:
         tls_directory = None
+
+    sections = pe.sections
 
     header_info = {
         "Machine Type":         pefile.MACHINE_TYPE[file_header.Machine],
