@@ -19,7 +19,6 @@ def main():
     arg_parser = argparse.ArgumentParser(add_help=False)
     arg_parser.add_argument('-h', '--header', action='store_true')
     arg_parser.add_argument('-id', '--initial_disassembly', action='store_true')
-    arg_parser.add_argument('-b', '--bytes', action='store_true')
     arg_parser.add_argument('-i', '--imports', action='store_true')
     arg_parser.add_argument('-r', '--resources', action='store_true')
     arg_parser.add_argument('-s', '--sections', action='store_true')
