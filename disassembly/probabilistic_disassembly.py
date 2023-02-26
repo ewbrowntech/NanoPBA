@@ -1,3 +1,14 @@
+"""
+probabilistic_disassembly.py
+
+@Author - Jason Barbieri - jab0180@auburn.edu
+@Version - 26 FEB 23
+
+Performs probabilistic disassembly on a given instruction superset. The logic used in
+this algorithm was translated directly from the pseudocode of Algorithm 1 in
+"Probabilistic Disassembly" by K. Miller, Y. Kwon, Y. Sun, et. al.
+"""
+
 import numpy as np
 
 def prob_disassembly(superset, hints):
@@ -45,6 +56,10 @@ def prob_disassembly(superset, hints):
         
  
 def forward_prop(superset, hints, D, RH, fixed_point):
+    ''' Passes all hints relating to each instruction up the control flow heirarchy to each of the
+        instruction's parents. Also updates the instruction's probability of being a data byte    
+    '''
+    
     for addr in superset:
         # If the instruction at the current address is definitely a data byte, then it
         # does not give any hints for the posteriors of any other instruction
@@ -74,10 +89,29 @@ def forward_prop(superset, hints, D, RH, fixed_point):
                     
     return fixed_point
     
-def prop_to_occlusion_space():
+def prop_to_occlusion_space(superset, hints, D, RH):
+    ''' This function traverses all the addresses and performs local propagation of probabilities within
+        the occlusion space of individual instructions.
+    '''
+    
+    for addr in superset:
+        occluding_set = get_occluding_instructions(superset, D, addr)
+        
+        # If the probability of the instruction at addr being a data byte has not been determined and
+        # there is at least one instruction in the occluding set that has a probability, calculate the
+        # probability that the instruction at addr is a data byte
+        if (D[addr] == none) and (len(occluding_set) > 0):
+            D[addr] = 1 - min(occluding_set)
+            
+
+def back_prop(superset, hints, D, RH, fixed_point):
     pass
 
-def back_prop():
+def get_occluding_instructions(superset, D, addr):
+    ''' Returns the list of instructions in the instruction superset that occlude the instruction at address addr.
+        The returned list also includes the probability that the occluding instruction is a data byte. Only the 
+        instructions that have probabilities are included in this
+    '''
     pass
  
 def is_invalid_inst(instruction):
