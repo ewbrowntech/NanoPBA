@@ -28,7 +28,10 @@ def perform_initial_disassembly_new(pe):
     instructions = []
     current_start_byte = CODE_BASE
 
-    for i in md.disasm(CODE_BYTES, current_start_byte):
+    while not (current_start_byte == CODE_END):
+        generator = md.disasm(CODE_BYTES, current_start_byte)
+        i = generator.__next__()
+
         potential_instruction = {
                 "raw_bytes": i.bytes,
                 "elements": []
