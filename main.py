@@ -11,6 +11,7 @@ from header.parse_header import parse_header
 from header.print_header import print_header
 from initial_disassembly.initial_disassembly import perform_initial_disassembly
 from initial_disassembly.print_initial_disassembly import print_initial_disassembly
+from disassembly.hint_finder import find_hints
 import pefile
 
 
@@ -43,6 +44,9 @@ def main():
     initial_disassembly = perform_initial_disassembly(pe)
     if args.initial_disassembly:
         print_initial_disassembly(initial_disassembly)
+    
+    # Find the hints from the instruction superset
+    find_hints(initial_disassembly)
 
 
 if __name__ == '__main__':
