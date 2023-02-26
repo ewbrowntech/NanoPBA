@@ -9,6 +9,7 @@ Runs disassembler
 import argparse
 from header.parse_header import parse_header
 from header.print_header import print_header
+from disassembly.initiate_disassembly import initiate_disassembly
 import pefile
 
 
@@ -37,6 +38,8 @@ def main():
     header = parse_header(pe)
     if args.header:
         print_header(header, args)
+    initiate_disassembly(pe)
+
 
 
 if __name__ == '__main__':
