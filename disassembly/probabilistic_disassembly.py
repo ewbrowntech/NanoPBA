@@ -53,6 +53,8 @@ def prob_disassembly(superset, hints):
         fixed_point = True
         
         fixed_point = forward_prop(superset, hints, D, RH, fixed_point)
+        prop_to_occlusion_space(superset, D)
+        fixed_point = back_prop(superset, D, fixed_point)
         
  
 def forward_prop(superset, hints, D, RH, fixed_point):
@@ -74,7 +76,7 @@ def forward_prop(superset, hints, D, RH, fixed_point):
             D[addr] = np.prod([hints[i] for i in RH[addr]])
             
         # Propagate the hints in RH[i] to i's control flow successor(s)
-        for n in <set of next instructions from i along control flow>:
+        for n in get_next_instructions(superset, addr):
             # If there are hints for this address (i.e., RH[addr]) that aren't in the proceeding
             # instruction's set of hints, propagate the hints at addr to successor n via union, and
             # update D[n]. If successor n has a smaller address (i.e., it already has been updated
@@ -84,12 +86,15 @@ def forward_prop(superset, hints, D, RH, fixed_point):
                 RH[n] = list(set(RH[addr]) | set(RH[n]))
                 D[n] = np.prod([hints[i] for i in RH[n])
                 
+                # If successor n has a smaller address (i.e., it already has been updated in the current
+                # round), then there needs to be another iteration of the whole algorithm (i.e., set
+                # fixed_point to false)
                 if n < addr:
                     fixed_point = false
                     
     return fixed_point
     
-def prop_to_occlusion_space(superset, hints, D, RH):
+def prop_to_occlusion_space(superset, D):
     ''' This function traverses all the addresses and performs local propagation of probabilities within
         the occlusion space of individual instructions.
     '''
@@ -104,7 +109,29 @@ def prop_to_occlusion_space(superset, hints, D, RH):
             D[addr] = 1 - min(occluding_set)
             
 
-def back_prop(superset, hints, D, RH, fixed_point):
+def back_prop(superset, D, fixed_point):
+    for addr in reversed(superset):
+        for p in get_prev_instructions(superset, addr):
+            # The probability of a preceeding byte being a data byte cannot be less than the probability
+            # that the child byte is a data byte.
+            if (D[p] == none) or (D[p] < D[addr]):
+                D[p] = D[addr]
+                
+                # If p has a larger address that addr, then we can tell that p has already been traversed.
+                # Hence, we need another iteration to ensure that p's changes are pro
+                if p > addr:
+                    fixed_point = false
+                    
+    return fixed_point
+
+def get_next_instructions(superset, addr):
+    ''' Gets the set of instructions that follow addr in the control flow
+    '''
+    pass
+    
+def get_prev_instructions(superset, addr):
+    ''' Gets the set of instructions that preceed addr in the control flow
+    '''
     pass
 
 def get_occluding_instructions(superset, D, addr):
