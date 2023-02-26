@@ -24,7 +24,7 @@ def prob_disassembly(superset, hints):
             (i.e., the probability that the instruction is a data byte).
          
         OUTPUT:
-        posterior - the calculated posteriors
+        posteriors - the calculated posteriors
     '''
     
     # The probability that address i is a data byte
@@ -32,6 +32,9 @@ def prob_disassembly(superset, hints):
     
     # The set of hints, denoted by a set of addresses that reach the address i
     RH = {}
+    
+    # The calculated posteriors 
+    posteriors = {}
     
     # Initialize the values for D (1.0 if invalid, None if valid)
     # 1.0 means that the address must be a data byte
@@ -55,6 +58,24 @@ def prob_disassembly(superset, hints):
         fixed_point = forward_prop(superset, hints, D, RH, fixed_point)
         prop_to_occlusion_space(superset, D)
         fixed_point = back_prop(superset, D, fixed_point)
+    
+    # Compute the posterior probabilities by normalization
+    for addr in superset:
+        # If an instruction starting at addr is invalid, the posterior is set to 0 (i.e., instruction addr
+        # is not a true positive)
+        if D[addr] == 1:
+            posteriors[addr] = 0
+            continue
+        
+        s = 1 / D[addr]
+        
+        # Sum up the inverse probability D for all instructions occluded with addr (including addr itself)
+        # This variable s seems to be the marginal probability
+        for j in get_occluding_set(superset, addr):
+            s = s + (1 / D[j])
+        
+        # The posterior probabilities are computed as the ratio bewteen (1 / D[addr]) and s
+        posteriors[addr] = (1 / D[addr]) / s
         
  
 def forward_prop(superset, hints, D, RH, fixed_point):
@@ -99,8 +120,12 @@ def prop_to_occlusion_space(superset, D):
         the occlusion space of individual instructions.
     '''
     
+    print([i for i in RH['addr5'] if not (i in RH['addr3'])])
+    
     for addr in superset:
-        occluding_set = get_occluding_instructions(superset, D, addr)
+        # Get the occluding set, but only include addresses that have probabilities
+        occluding_set = get_occluding_set(superset, D, addr)
+        occluding_set = [prob for prob in occluding_set if not (prob == none)]
         
         # If the probability of the instruction at addr being a data byte has not been determined and
         # there is at least one instruction in the occluding set that has a probability, calculate the
@@ -110,6 +135,12 @@ def prop_to_occlusion_space(superset, D):
             
 
 def back_prop(superset, D, fixed_point):
+    ''' This function traverses from the end of the superset to the beginning (in contrast to forward_prop() and
+        prop_to_occlusion_space()). For each address addr, if you have more evidence that addr is data (i.e., if
+        its control flow predecessor p does not have any probability or a smaller probability), then set p to have
+        the same probability of denoting data bytes.
+    '''
+    
     for addr in reversed(superset):
         for p in get_prev_instructions(superset, addr):
             # The probability of a preceeding byte being a data byte cannot be less than the probability
@@ -134,10 +165,9 @@ def get_prev_instructions(superset, addr):
     '''
     pass
 
-def get_occluding_instructions(superset, D, addr):
+def get_occluding_set(superset, D, addr):
     ''' Returns the list of instructions in the instruction superset that occlude the instruction at address addr.
-        The returned list also includes the probability that the occluding instruction is a data byte. Only the 
-        instructions that have probabilities are included in this
+        The returned list also includes the probability that the occluding instruction is a data byte.
     '''
     pass
  
