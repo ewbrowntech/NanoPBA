@@ -14,6 +14,7 @@ from initial_disassembly.print_initial_disassembly import print_initial_disassem
 from disassembly.hint_finder import find_hints
 import pefile
 
+from initial_disassembly.initial_disassembly_new import perform_initial_disassembly_new
 
 # Run disassembler
 def main():
@@ -41,7 +42,8 @@ def main():
     header = parse_header(pe)
     if args.header:
         print_header(header, args)
-    initial_disassembly = perform_initial_disassembly(pe)
+    #initial_disassembly = perform_initial_disassembly(pe)
+    initial_disassembly = perform_initial_disassembly_new(pe)
     if args.initial_disassembly:
         print_initial_disassembly(initial_disassembly)
     
