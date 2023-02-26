@@ -26,26 +26,22 @@ def perform_initial_disassembly_new(pe):
     md = Cs(CS_ARCH_X86, CS_MODE_64)
 
     instructions = []
-    current_start_byte = CODE_BASE
+    offset = 0
 
-    while not (current_start_byte == CODE_END):
-        generator = md.disasm(CODE_BYTES, current_start_byte)
-        i = generator.__next__()
-
-        potential_instruction = {
-                "raw_bytes": i.bytes,
-                "elements": []
-            }
-        
-        potential_instruction["elements"].append(i.address)
-        potential_instruction["elements"].append(i.size)
-        potential_instruction["elements"].append(i.mnemonic)
-        potential_instruction["elements"].append(i.op_str)
-
-        instructions.append(potential_instruction)
+    while not (offset == CODE_SIZE):
+        try:
+            generator = md.disasm(CODE_BYTES[offset:], CODE_BASE + offset, count=1)
+            i = generator.__next__()
+            
+            potential_instruction = create_potential_instruction(i.bytes, i.address, i.size, i.mnemonic, i.op_str)
+            instructions.append(potential_instruction)
+        except StopIteration:
+            # This should trigger when there is an invalid instruction
+            potential_instruction = create_potential_instruction(CODE_BYTES[offset], CODE_BASE + offset, 1, "BAD", "")
+            instructions.append(potential_instruction)
 
         # Increment by one byte
-        current_start_byte += 1
+        offset += 1
 
     initial_disassembly = {
         "CODE_BASE": CODE_BASE,
@@ -55,3 +51,16 @@ def perform_initial_disassembly_new(pe):
     }
 
     return initial_disassembly
+
+def create_potential_instruction(bytes, address, size, mnemonic, op_str):
+    potential_instruction = {
+            "raw_bytes": bytes,
+            "elements": []
+        }
+    
+    potential_instruction["elements"].append(address)
+    potential_instruction["elements"].append(size)
+    potential_instruction["elements"].append(mnemonic)
+    potential_instruction["elements"].append(op_str)
+
+    return potential_instruction
