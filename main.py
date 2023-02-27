@@ -11,8 +11,12 @@ from header.parse_header import parse_header
 from header.print_header import print_header
 from initial_disassembly.initial_disassembly import perform_initial_disassembly
 from initial_disassembly.print_initial_disassembly import print_initial_disassembly
+from disassembly.hint_finder import find_hints
+from disassembly.probabilistic_disassembly import prob_disassembly
+from disassembly.ctrl_flow_generator import ctrl_flow_generator
 import pefile
 
+from initial_disassembly.initial_disassembly_new import perform_initial_disassembly_new
 
 # Run disassembler
 def main():
@@ -40,10 +44,20 @@ def main():
     header = parse_header(pe)
     if args.header:
         print_header(header, args)
-    initial_disassembly = perform_initial_disassembly(pe)
+    #initial_disassembly = perform_initial_disassembly(pe)
+    initial_disassembly = perform_initial_disassembly_new(pe)
     if args.initial_disassembly:
         print_initial_disassembly(initial_disassembly)
+    
+    # Generate the control flow graph
+    cf_gen = ctrl_flow_generator(initial_disassembly['CODE_SIZE'])
+    cf_gen.make_graph(initial_disassembly)
 
+    # Find the hints from the instruction superset
+    hints = find_hints(initial_disassembly)
+
+    # Get the posterior probability that any given byte is not a data byte
+    posteriors = prob_disassembly(initial_disassembly, hints)
 
 if __name__ == '__main__':
     main()
