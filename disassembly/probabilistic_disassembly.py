@@ -111,7 +111,8 @@ def forward_prop(cf_gen, superset, hints, D, RH, fixed_point):
             D[i] = np.prod([hints[j] for j in RH[i]])
             
         # Propagate the hints in RH[i] to i's control flow successor(s)
-        for n in cf_gen.get_next_instructions(superset, instruction):
+        test = cf_gen.get_next_instructions(superset, instruction)
+        for n in test:
             # If there are hints for this address (i.e., RH[addr]) that aren't in the proceeding
             # instruction's set of hints, propagate the hints at addr to successor n via union, and
             # update D[n]. If successor n has a smaller address (i.e., it already has been updated

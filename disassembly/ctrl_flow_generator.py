@@ -3,17 +3,16 @@ class ctrl_flow_generator:
     def __new__(cls, num_instructions):
         if not hasattr(cls, 'instance'):
             cls.instance = super(ctrl_flow_generator, cls).__new__(cls)
+
+            # This list structure is the cached control flow
+            # The index is the address offset from the start of the instruction block,
+            # and the value is address offset of the next instruction in the flow
+            cls.instance.flow_cache = []
+
+            # Make an entry for each possible instruction in the flow cache
+            for i in range(num_instructions):
+                cls.instance.flow_cache.append({'predecessors': [], 'successors': []})
         return cls.instance
-
-    def __init__(self, num_instructions):
-        # This list structure is the cached control flow
-        # The index is the address offset from the start of the instruction block,
-        # and the value is address offset of the next instruction in the flow
-        self.flow_cache = []
-
-        # Make an entry for each possible instruction in the flow cache
-        for i in range(num_instructions):
-            self.flow_cache.append({'predecessors': [], 'successors': []})
 
     def make_graph(self, superset):
         ''' This method calls make_graph_starting_at for every instruction in the superset, thus 
@@ -119,18 +118,63 @@ class ctrl_flow_generator:
                 current_instruction = superset['instructions'][next_addr]
 
     def get_next_instructions(self, superset, start_instruction):
-        ''' Gets the set of instructions that follow addr in the control flow
+        ''' Gets the set of instructions that follow addr in the control flow. Note that the
+            list will be in breadth-first order; hence, this should only be used if you just
+            need to enumerate the places that control could flow to during execution
         '''
 
         # Create the control flow list
-        control_flow = []        
+        control_flow = [] 
+        current_instruction = start_instruction
+
+        # A list of addresses that control can flow to, but we haven't processed yet.
+        # This will be populated when we have a jump instruction because there are two
+        # possible places that control can flow to       
+        control_queue = []
+
+        # Pre-load the control queue with the initial instructions targets
+        control_queue.extend(self.check_cached_flow_graph(superset['CODE_BASE'], current_instruction['elements'][0]))
+
+        # While there are still addresses to traverse
+        while len(control_queue) > 0:
+            # Add the next address to the control flow list
+            next_addr = control_queue.pop()
+            control_flow.append(next_addr)
+
+            # Add the next address's flow targets to the queue 
+            control_queue.extend(self.flow_cache[next_addr]['successors'])
 
         return control_flow
 
-    def get_prev_instructions(self, superset, addr):
-        ''' Gets the set of instructions that preceed addr in the control flow
+    def get_prev_instructions(self, superset, start_instruction):
+        ''' Gets the set of instructions that preceed addr in the control flow. Note that the
+            list will be in breadth-first order; hence, this should only be used if you just
+            need to enumerate the places that control could flow to during execution
         '''
-        pass
+        
+        # Create the control flow list
+        control_flow = [] 
+        current_instruction = start_instruction
+
+        # A list of addresses that control can flow to, but we haven't processed yet.
+        # This will be populated when we have a jump instruction because there are two
+        # possible places that control can flow to       
+        control_queue = []
+
+        # Pre-load the control queue with the initial instructions targets
+        offset = current_instruction['elements'][0] - superset['CODE_BASE']
+        control_queue.extend(self.flow_cache[offset]['predecessors'])
+
+        # While there are still addresses to traverse
+        while len(control_queue) > 0:
+            # Add the next address to the control flow list
+            next_addr = control_queue.pop()
+            control_flow.append(next_addr)
+
+            # Add the next address's flow targets to the queue 
+            control_queue.extend(self.flow_cache[next_addr]['predecessors'])
+
+        return control_flow
 
     def check_cached_flow_graph(self, start, addr):
         ''' Checks the chache to see if the control flow has already been calculated for the
