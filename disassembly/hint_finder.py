@@ -16,13 +16,16 @@ def find_hints(superset):
     '''
     
     hints = []
+
+    for instruction in superset['instructions']:
+        hints.append(None)
     
     # I'm sure these heuristic functions could be generalized into their own
     # interface, but I think that would be a bit over-engineered for this
     # implementation
-    hints.append(heuristic1())
-    hints.append(heuristic2())
-    hints.append(heuristic3())
+    hints.extend(heuristic1())
+    hints.extend(heuristic2())
+    hints.extend(heuristic3())
     
     return hints
     
@@ -31,6 +34,7 @@ def heuristic1():
         and i3 with i3 being the transfer target of both i1 and i2, there is a good
         chance that they are not data bytes.
     '''
+    return {}
 
 def heuristic2():
     ''' Control Flow Crossing: if there are three valid instructions i1, i2, and i3
@@ -38,8 +42,10 @@ def heuristic2():
         and i2 having and abitrary valid instruction has 50% chance to write to some
         register of some flag bit (and the other 50% chance of writing only to memory)
     '''
+    return {}
 
 def heuristic3():
     ''' Register Define-Use Relation: Instructions i1 and i2 have a define-use relation
         if i1 defines the value of a register (or some flag bit) and i2 uses the register.
     '''
+    return {}
