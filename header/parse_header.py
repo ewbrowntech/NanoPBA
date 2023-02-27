@@ -75,12 +75,15 @@ def parse_exports(export_directory):
 
 # Parse resource table
 def parse_resources(resource_directory):
-    resource_table = []
-    for resource_type in resource_directory.entries:
-        resource_entry = {"Type": pefile.RESOURCE_TYPE.get(resource_type.id, resource_type.id), "ID": []}
-        for resource_id in resource_type.directory.entries:
-            resource_entry["ID"].append(resource_id.id)
-        resource_table.append(resource_entry)
+    if resource_directory is None:
+        resource_table = None
+    else:
+        resource_table = []
+        for resource_type in resource_directory.entries:
+            resource_entry = {"Type": pefile.RESOURCE_TYPE.get(resource_type.id, resource_type.id), "ID": []}
+            for resource_id in resource_type.directory.entries:
+                resource_entry["ID"].append(resource_id.id)
+            resource_table.append(resource_entry)
     return resource_table
 
 
