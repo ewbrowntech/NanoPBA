@@ -3,3 +3,5 @@ disassembly/__pycache__/ctrl_flow_generator.cpython-311.pyc
 disassembly/__pycache__/hint_finder.cpython-311.pyc
 disassembly/__pycache__/probabilistic_disassembly.cpython-311.pyc
 initial_disassembly/__pycache__/initial_disassembly_new.cpython-311.pyc
+.idea/
+disassembly/__pycache__/

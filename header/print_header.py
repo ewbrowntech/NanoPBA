@@ -49,6 +49,9 @@ def print_exports(export_table):
 
 # Print the resource table
 def print_resources(resource_table, doPrintResourceIDs):
+    if resource_table is None:
+        print(" None")
+        return
     for resource_entry in resource_table:
         print("  -", resource_entry["Type"])
         if doPrintResourceIDs:
