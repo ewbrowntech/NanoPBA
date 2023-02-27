@@ -30,8 +30,7 @@ for section in pe.sections:
 text_offset = text_section.PointerToRawData
 data_offset = data_section.PointerToRawData
 
+#calculate result based off entry point address and offset
 result = entrypoint_address + text_offset
 print(f'The offset of the .text section is 0x{text_offset:X}')
-
-
-#could us the data gotten in the print header.py and do calcs w that
+print(result)
