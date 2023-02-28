@@ -9,6 +9,7 @@ this algorithm was translated directly from the pseudocode of Algorithm 1 in
 "Probabilistic Disassembly" by K. Miller, Y. Kwon, Y. Sun, et. al.
 """
 
+import sys
 import numpy as np
 from disassembly.ctrl_flow_generator import ctrl_flow_generator
 
@@ -78,16 +79,24 @@ def prob_disassembly(superset, hints):
             posteriors[i] = 0
             continue
         
-        s = 1 / (D[i] or 0.5)
+        if D[i] == 0:
+            s = sys.float_info.max
+        else:
+            s = 1 / D[i]
          
         # Sum up the inverse probability D for all instructions occluded with addr (including addr itself)
         # This variable s seems to be the marginal probability
         for j in get_occluding_set(superset, D, addr):
-            s += (1 / (D[j] or 0.5))
+            if D[j] == 0:
+                s = sys.float_info.max
+            else:
+                s = 1 / D[j]
         
         # The posterior probabilities are computed as the ratio bewteen (1 / D[addr]) and s
-        posteriors[i] = (1 / (D[i] or 0.5)) / s
-
+        if D[i] == 0:
+            posteriors[i] = sys.float_info.max / s
+        else:
+            posteriors[i] = (1 / D[i]) / s
     return posteriors
 
 def forward_prop(cf_gen, superset, hints, D, RH, fixed_point):
@@ -112,7 +121,7 @@ def forward_prop(cf_gen, superset, hints, D, RH, fixed_point):
             D[i] = np.prod([hints[j] for j in RH[i]])
             
         # Propagate the hints in RH[i] to i's control flow successor(s)
-        for n in cf_gen.get_next_instructions(superset, instruction):
+        for n in cf_gen.flow_cache[i]['successors']: #cf_gen.get_next_instructions(superset, instruction):
             # If there are hints for this address (i.e., RH[addr]) that aren't in the proceeding
             # instruction's set of hints, propagate the hints at addr to successor n via union, and
             # update D[n]. If successor n has a smaller address (i.e., it already has been updated
@@ -160,7 +169,7 @@ def back_prop(cf_gen, superset, D, fixed_point):
         addr = instruction['elements'][0]
         i = addr - superset['CODE_BASE']
 
-        for p in cf_gen.get_prev_instructions(superset, instruction):
+        for p in cf_gen.flow_cache[i]['predecessors']: #cf_gen.get_prev_instructions(superset, instruction):
             # The probability of a preceeding byte being a data byte cannot be less than the probability
             # that the child byte is a data byte.
             if (D[i] is not None) and ((D[p] is None) or (D[p] < D[i])):
