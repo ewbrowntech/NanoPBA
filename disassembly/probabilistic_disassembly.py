@@ -87,6 +87,14 @@ def prob_disassembly(superset, hints):
         # The posterior probabilities are computed as the ratio bewteen (1 / D[addr]) and s
         posteriors[addr] = (1 / D[addr]) / s
 
+       # Get the posteriers with > 0.99, add them to new list and return
+        high_posteriors = []
+        for x in posteriors:
+            if x >= 0.99:
+                high_posteriors.append(x)
+        ordered_high_list = sorted(high_posteriors)
+
+    return ordered_high_list
     return posteriors
 
 def forward_prop(cf_gen, superset, hints, D, RH, fixed_point):
