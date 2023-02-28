@@ -58,6 +58,7 @@ def main():
 
     # Get the posterior probability that any given byte is not a data byte
     posteriors = prob_disassembly(initial_disassembly, hints)
+    print(posteriors)
 
 if __name__ == '__main__':
     main()
