@@ -9,6 +9,7 @@ Generates a list of hints according to the hint-finding heuristics presented in
 and exhaustive collection of all possible heuristics--just the ones presented in
 the paper.
 """
+from disassembly.def_use_relation import def_use_relation
 
 def find_hints(superset):
     ''' This function takes the parsed instruction superset and generates 
@@ -17,16 +18,16 @@ def find_hints(superset):
     
     hints = []
 
-    for instruction in superset['instructions']:
-        hints.append(None)
+    # for instruction in superset['instructions']:
+    #     hints.append(None)
     
     # I'm sure these heuristic functions could be generalized into their own
     # interface, but I think that would be a bit over-engineered for this
     # implementation
     hints.extend(heuristic1())
     hints.extend(heuristic2())
-    hints.extend(heuristic3())
-    
+    hints.extend(heuristic3(superset))
+
     return hints
     
 def heuristic1():
@@ -44,8 +45,9 @@ def heuristic2():
     '''
     return {}
 
-def heuristic3():
+def heuristic3(superset):
     ''' Register Define-Use Relation: Instructions i1 and i2 have a define-use relation
         if i1 defines the value of a register (or some flag bit) and i2 uses the register.
     '''
-    return {}
+    hints = def_use_relation(superset)
+    return hints
