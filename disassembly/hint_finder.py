@@ -10,6 +10,7 @@ and exhaustive collection of all possible heuristics--just the ones presented in
 the paper.
 """
 from disassembly.def_use_relation import def_use_relation
+import capstone
 
 def find_hints(superset):
     ''' This function takes the parsed instruction superset and generates 
