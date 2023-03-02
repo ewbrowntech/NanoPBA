@@ -7,3 +7,6 @@ initial_disassembly/__pycache__/initial_disassembly_new.cpython-311.pyc
 disassembly/__pycache__/
 header/__pycache__/parse_header.cpython-311.pyc
 header/__pycache__/print_header.cpython-311.pyc
+header/__pycache__/
+initial_disassembly/__pycache__/
+test/commands.md

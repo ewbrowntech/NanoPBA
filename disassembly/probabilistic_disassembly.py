@@ -97,7 +97,15 @@ def prob_disassembly(superset, hints):
             posteriors[i] = sys.float_info.max / s
         else:
             posteriors[i] = (1 / D[i]) / s
-    return posteriors
+
+       # Get the posteriers with > 0.99, add them to new list and return
+        high_posteriors = []
+        for x in posteriors:
+            if x >= 0.99:
+                high_posteriors.append(x)
+        ordered_high_list = sorted(high_posteriors)
+
+    return ordered_high_list
 
 def forward_prop(cf_gen, superset, hints, D, RH, fixed_point):
     ''' Passes all hints relating to each instruction up the control flow heirarchy to each of the
