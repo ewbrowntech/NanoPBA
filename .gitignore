@@ -5,3 +5,6 @@ disassembly/__pycache__/probabilistic_disassembly.cpython-311.pyc
 initial_disassembly/__pycache__/initial_disassembly_new.cpython-311.pyc
 .idea/
 disassembly/__pycache__/
+header/__pycache__/
+initial_disassembly/__pycache__/
+test/commands.md
