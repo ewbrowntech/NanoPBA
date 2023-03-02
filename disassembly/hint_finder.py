@@ -30,12 +30,36 @@ def find_hints(superset):
 
     return hints
     
-def heuristic1():
-    ''' Control Flow Convergence: if there are three potential instructions i1, i2,
-        and i3 with i3 being the transfer target of both i1 and i2, there is a good
-        chance that they are not data bytes.
-    '''
-    return {}
+def heuristic1(superset, hints):
+    hints = []
+    superset = []
+    known_targets = {}
+
+    # Initialize a Capstone disassembler for x86-64 architecture
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+
+    for i, instr in md.disasm(superset, 0):
+        try:
+            print((instr.address, instr.mnemonic, instr.op_str))
+        except capstone.CsError:
+            hints[i] = 0
+
+    # Disassemble the binary code and print out the target addresses of call instructions
+    for instr in md.disasm(superset, 0):
+        if instr.mnemonic == "call":
+            target_address = instr.address + instr.size + instr.operands[0].value.imm
+
+    for instr in superset['instructions']:
+        address = instr['elements'][0]
+        mnemonic = instr['elements'][2]
+        op_str = instr['elements'][3]
+
+    for i, instr in enumerate(superset):
+        if instr.mnemonic is target_address:
+            target = target_address
+            known_targets[target]
+            hints[i] = 1
+    return hints
 
 def heuristic2():
     ''' Control Flow Crossing: if there are three valid instructions i1, i2, and i3
