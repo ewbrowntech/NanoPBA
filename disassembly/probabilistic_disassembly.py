@@ -9,6 +9,7 @@ this algorithm was translated directly from the pseudocode of Algorithm 1 in
 "Probabilistic Disassembly" by K. Miller, Y. Kwon, Y. Sun, et. al.
 """
 
+import sys
 import numpy as np
 from disassembly.ctrl_flow_generator import ctrl_flow_generator
 
@@ -53,6 +54,7 @@ def prob_disassembly(superset, hints):
         
         # Show that we have not found any hints pointing to the address yet
         RH.append({})
+        posteriors.append(None)
         
     # This flag is false if there has been a change in the pobabilities during forward
     # or backward propagation. Hence, the algorithm ends when there are no updates to
@@ -67,25 +69,34 @@ def prob_disassembly(superset, hints):
         fixed_point = back_prop(cf_gen, superset, D, fixed_point)
     
     # Compute the posterior probabilities by normalization
-    for instruction in superset['instructions']:
+    for (i, instruction) in enumerate(superset['instructions']):
         # Get the address for the sake of readability
         addr = instruction['elements'][0]
 
         # If an instruction starting at addr is invalid, the posterior is set to 0 (i.e., instruction addr
         # is not a true positive)
-        if D[addr] == 1:
-            posteriors[addr] = 0
+        if (instruction['elements'][2] == 'BAD') or (D[i] == 1):
+            posteriors[i] = 0
             continue
         
-        s = 1 / D[addr]
-        
+        if D[i] == 0:
+            s = sys.float_info.max
+        else:
+            s = 1 / D[i]
+         
         # Sum up the inverse probability D for all instructions occluded with addr (including addr itself)
         # This variable s seems to be the marginal probability
-        for j in get_occluding_set(superset, addr):
-            s = s + (1 / D[j])
+        for j in get_occluding_set(superset, D, addr):
+            if D[j] == 0:
+                s = sys.float_info.max
+            else:
+                s = 1 / D[j]
         
         # The posterior probabilities are computed as the ratio bewteen (1 / D[addr]) and s
-        posteriors[addr] = (1 / D[addr]) / s
+        if D[i] == 0:
+            posteriors[i] = sys.float_info.max / s
+        else:
+            posteriors[i] = (1 / D[i]) / s
 
        # Get the posteriers with > 0.99, add them to new list and return
         high_posteriors = []
@@ -95,7 +106,6 @@ def prob_disassembly(superset, hints):
         ordered_high_list = sorted(high_posteriors)
 
     return ordered_high_list
-    return posteriors
 
 def forward_prop(cf_gen, superset, hints, D, RH, fixed_point):
     ''' Passes all hints relating to each instruction up the control flow heirarchy to each of the
@@ -119,8 +129,7 @@ def forward_prop(cf_gen, superset, hints, D, RH, fixed_point):
             D[i] = np.prod([hints[j] for j in RH[i]])
             
         # Propagate the hints in RH[i] to i's control flow successor(s)
-        test = cf_gen.get_next_instructions(superset, instruction)
-        for n in test:
+        for n in cf_gen.flow_cache[i]['successors']: #cf_gen.get_next_instructions(superset, instruction):
             # If there are hints for this address (i.e., RH[addr]) that aren't in the proceeding
             # instruction's set of hints, propagate the hints at addr to successor n via union, and
             # update D[n]. If successor n has a smaller address (i.e., it already has been updated
@@ -142,19 +151,19 @@ def prop_to_occlusion_space(superset, D):
     ''' This function traverses all the addresses and performs local propagation of probabilities within
         the occlusion space of individual instructions.
     '''    
-    for instruction in superset['instructions']:
+    for (i, instruction) in enumerate(superset['instructions']):
         # Get the address for the sake of readability
         addr = instruction['elements'][0]
 
         # Get the occluding set, but only include addresses that have probabilities
         occluding_set = get_occluding_set(superset, D, addr)
-        occluding_set = [prob for prob in occluding_set if not (prob == None)]
+        occluding_set = [i for i in occluding_set if not (D[i] == None)]
         
         # If the probability of the instruction at addr being a data byte has not been determined and
         # there is at least one instruction in the occluding set that has a probability, calculate the
         # probability that the instruction at addr is a data byte
-        if (D[addr] == None) and (len(occluding_set) > 0):
-            D[addr] = 1 - min(occluding_set)          
+        if (D[i] == None) and (len(occluding_set) > 0):
+            D[i] = 1 - min([D[j] for j in occluding_set])          
 
 def back_prop(cf_gen, superset, D, fixed_point):
     ''' This function traverses from the end of the superset to the beginning (in contrast to forward_prop() and
@@ -163,28 +172,51 @@ def back_prop(cf_gen, superset, D, fixed_point):
         the same probability of denoting data bytes.
     '''
     
-    for instruction in reversed(superset):
+    for instruction in reversed(superset['instructions']):
         # Get the address for the sake of readability
         addr = instruction['elements'][0]
+        i = addr - superset['CODE_BASE']
 
-        for p in cf_gen.get_prev_instructions(superset, addr):
+        for p in cf_gen.flow_cache[i]['predecessors']: #cf_gen.get_prev_instructions(superset, instruction):
             # The probability of a preceeding byte being a data byte cannot be less than the probability
             # that the child byte is a data byte.
-            if (D[p] == None) or (D[p] < D[addr]):
-                D[p] = D[addr]
+            if (D[i] is not None) and ((D[p] is None) or (D[p] < D[i])):
+                D[p] = D[i]
                 
                 # If p has a larger address that addr, then we can tell that p has already been traversed.
                 # Hence, we need another iteration to ensure that p's changes are pro
-                if p > addr:
+                if p > i:
                     fixed_point = False
                     
     return fixed_point
 
 def get_occluding_set(superset, D, addr):
-    ''' Returns the list of instructions in the instruction superset that occlude the instruction at address addr.
-        The returned list also includes the probability that the occluding instruction is a data byte.
+    ''' Returns the list of instructions in the instruction superset that occlude the instruction
+        at address addr. The returned list also includes the probability that the occluding 
+        instruction is a data byte. The variable addr should be the instruction address
     '''
-    pass
+
+    occluding_set = []
+    offset = addr - superset['CODE_BASE']
+    
+    # Check the 15 Bytes before the current address because x86 requires that instructions are 15
+    # bytes or less
+    for i in range(1, 16):
+        # Don't look beyond the start of the instruction block
+        if offset - i < 0:
+            break
+        
+        # If the instruction i bytes before the instruction at addr is at least as large as i + 1
+        # bytes, then it occludes the instruction at addr. For example, an instruction one byte
+        # back will occlude if it is at least two bytes long
+        if superset['instructions'][offset - i]['elements'][1] >= i + 1:
+            occluding_set.append(offset - i)
+
+    # Also add any instructions that the instruction at addr occludes
+    for j in range(1, superset['instructions'][offset]['elements'][1]):
+        occluding_set.append(offset + j)
+
+    return occluding_set
  
 def is_invalid_inst(instruction):
     ''' This function accepts an instruction and determines if it is a valid instruction.

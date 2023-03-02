@@ -139,10 +139,12 @@ class ctrl_flow_generator:
         while len(control_queue) > 0:
             # Add the next address to the control flow list
             next_addr = control_queue.pop()
-            control_flow.append(next_addr)
 
-            # Add the next address's flow targets to the queue 
-            control_queue.extend(self.flow_cache[next_addr]['successors'])
+            if next_addr not in control_flow:
+                control_flow.append(next_addr)
+
+                # Add the next address's flow targets to the queue 
+                control_queue.extend(self.flow_cache[next_addr]['successors'])
 
         return control_flow
 
@@ -169,10 +171,12 @@ class ctrl_flow_generator:
         while len(control_queue) > 0:
             # Add the next address to the control flow list
             next_addr = control_queue.pop()
-            control_flow.append(next_addr)
 
-            # Add the next address's flow targets to the queue 
-            control_queue.extend(self.flow_cache[next_addr]['predecessors'])
+            if next_addr not in control_flow:
+                control_flow.append(next_addr)
+
+                # Add the next address's flow targets to the queue 
+                control_queue.extend(self.flow_cache[next_addr]['predecessors'])
 
         return control_flow
 

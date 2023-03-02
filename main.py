@@ -23,6 +23,8 @@ def main():
     arg_parser = argparse.ArgumentParser(add_help=False)
     arg_parser.add_argument('-h', '--header', action='store_true')
     arg_parser.add_argument('-id', '--initial_disassembly', action='store_true')
+    arg_parser.add_argument('-hint', '--hints', action='store_true')
+    arg_parser.add_argument('-p', '--posteriors', action='store_true')
     arg_parser.add_argument('-i', '--imports', action='store_true')
     arg_parser.add_argument('-r', '--resources', action='store_true')
     arg_parser.add_argument('-s', '--sections', action='store_true')
@@ -55,9 +57,13 @@ def main():
 
     # Find the hints from the instruction superset
     hints = find_hints(initial_disassembly)
+    if args.hints:
+        print(hints)
 
     # Get the posterior probability that any given byte is not a data byte
-    # posteriors = prob_disassembly(initial_disassembly, hints)
+    posteriors = prob_disassembly(initial_disassembly, hints)
+    if args.posteriors:
+        print(posteriors)
 
 if __name__ == '__main__':
     main()
